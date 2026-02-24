@@ -1,54 +1,13 @@
 # APP5
 # Modélisation cinématique d'un systeme robotisé 6 axes d'inspection par vision
 
-
+## importation des bibliothèques nécessaires
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
 from mpl_toolkits.mplot3d import Axes3D
 
-# initialisation des données
-# pour tout les matrice, premiere range: x, deuxieme range: y, troisieme range: z
-Wo = np.array([0, 0, 0])# origine du repere monde
-W = np.array([[1, 0, 0], 
-              [0, 1, 0], 
-              [0, 0, 1]]) # base du repere monde
-T = np.array([[1, 0, 0], 
-              [0, 1, 0], 
-              [0, 0, 1]]) # base du repere outil
-Po = np.array([0.5994, 0, 0.1991]) # position de la piece dans le repere monde
-P = np.array([[1, 0, 0],
-              [0, 1, 0], 
-              [0, 0, 1]]) # base du repere piece
-Vo = np.array([0.8, 0.7, 0]) # position de la caméra dans le repere monde
-V = np.array([[1, 0, 0],
-              [0, 1, 0], 
-              [0, 0, 1]]) # base du repere camera
-qT = np.array([0,0,0,0,0,0]) # qT = [q1, q2, q3, q4, q5, q6] où q = theta
-Ao = np.array([0, 0.15, 0]) # vecteur de W à A (a1, a2, a3)
-A = np.array([[1, 0, 0],
-              [0, 1, 0],
-              [0, 0, 1]]) # base du joint 2
-Bo = np.array([0.05, 0.1, 0]) # vecteur de A à B (b1, b2, b3)
-B = np.array([[1, 0, 0],
-              [0, 1, 0],
-              [0, 0, 1]]) # base du joint 3
-Co = np.array([0, 0.5, 0]) # vecteur de B à C (c1, c2, c3)
-C = np.array([[1, 0, 0],
-              [0, 1, 0],
-              [0, 0, 1]]) # base du joint 4
-Do = np.array([0.1, 0.02, 0]) # vecteur de C à D (d1, d2, d3)
-D = np.array([[1, 0, 0],
-              [0, 1, 0],
-              [0, 0, 1]]) # base du joint 5
-Eo = np.array([0.3, 0, 0]) # vecteur de D à E ( e1, e2, e3)
-E = np.array([[1, 0, 0],
-              [0, 1, 0],
-              [0, 0, 1]]) # base du joint 6
-To = np.array([0.02, 0, 0]) # vecteur de E à T (t1, t2, t3)
-Lb = np.array([0.15, 0, 0]) # longueur de la piece
-Hg = np.array([0, 0, 0.1]) # grande hauteur de la piece
-Hd = np.array([0, 0, 0.05]) # petite hauteur de la piece
+## initialisation des fonctions
 
 # rotation des bases de chaque joint
 def rotation(base, theta, axe):
@@ -78,6 +37,7 @@ def rotation(base, theta, axe):
         new_base[1,1] = np.cos(theta)
         new_base[2,2] = 1
     return np.dot(new_base, base)
+
 # matrice de rotation à partir de deux bases
 def matrice_rotation(base1, base2):
     """
@@ -89,8 +49,8 @@ def matrice_rotation(base1, base2):
     for i in range(3):
         for j in range(3):
             rotation[i, j] = np.dot(base1[i], base2[j])
-    return rotation
-    
+    return rotation    
+
 # changement de base
 def changement_base(vecteur, base1, base2):
     """ 
@@ -101,8 +61,22 @@ def changement_base(vecteur, base1, base2):
     """
     new_vecteur = np.zeros(3)
     vect_unitaire = vecteur / np.linalg.norm(vecteur) # normalisation du vecteur
-    new_vector =  np.dot(matrice_rotation(base1, base2), vecteur)
+    new_vector =  np.dot(matrice_rotation(base1, base2), vect_unitaire) * np.linalg.norm(vecteur)
     return new_vector
+
+# mise a jour des positions
+def MaJ_pos(Vec_pos, base1, base2, theta, axe):
+    """
+    mets à jour la position du vecteur en effectuant une rotation et un changement de base
+    Vec_pos : position du vecteur à mettre à jour
+    base1 : base de référence actuelle du vecteur
+    base2 : base de référence souhaitée du vecteur
+    theta : angle de rotation en radians
+    axe : axe de rotation (1 pour x, 2 pour y, 3 pour z)
+    """
+    new_base = rotation(base1,theta,axe)
+    new_pos = changement_base(Vec_pos, new_base, base2)
+    return new_pos
 
 # affichage de la simulation
 def afficher_robot(Po, Ao, Bo, Co, Do, Eo, To, Wo, Lb, Hg, Hd):
@@ -143,7 +117,69 @@ def afficher_robot(Po, Ao, Bo, Co, Do, Eo, To, Wo, Lb, Hg, Hd):
     plt.show()
 
 
+## initialisation des données
+PI = 3.141592653
+# pour tout les matrice, premiere rangée: x(1), deuxieme rangée: y(2), troisieme rangée: z(3)
+qT = np.array([0, 0, 0, 0, 0, 0]) # qT = [q1, q2, q3, q4, q5, q6] où q = theta
+#qT = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1]) # qT = [q1, q2, q3, q4, q5, q6] où q = theta
+
+Wo = np.array([0, 0, 0])# origine du repere world
+W = np.array([[1, 0, 0], 
+              [0, 1, 0], 
+              [0, 0, 1]]) # base du repere world
+Ao = np.array([0, 0.15, 0]) # vecteur de W à A (a1, a2, a3)
+A = np.array([[1, 0, 0],
+              [0, 1, 0],
+              [0, 0, 1]]) # base du joint 2
+Bo = np.array([0.05, 0.1, 0]) # vecteur de A à B (b1, b2, b3)
+B = np.array([[1, 0, 0],
+              [0, 1, 0],
+              [0, 0, 1]]) # base du joint 3
+Co = np.array([0, 0.5, 0]) # vecteur de B à C (c1, c2, c3)
+C = np.array([[1, 0, 0],
+              [0, 1, 0],
+              [0, 0, 1]]) # base du joint 4
+Do = np.array([0.1, 0.02, 0]) # vecteur de C à D (d1, d2, d3)
+D = np.array([[1, 0, 0],
+              [0, 1, 0],
+              [0, 0, 1]]) # base du joint 5
+Eo = np.array([0.3, 0, 0]) # vecteur de D à E ( e1, e2, e3)
+E = np.array([[1, 0, 0],
+              [0, 1, 0],
+              [0, 0, 1]]) # base du joint 6
+To = np.array([0.02, 0, 0]) # vecteur de E à T (t1, t2, t3)
+T = np.array([[1, 0, 0], 
+              [0, 1, 0], 
+              [0, 0, 1]]) # base du repere outil
+# piece
+Po = np.array([0.5994, 0.1991, 0]) # position de la piece dans le repere monde
+P = np.array([[1, 0, 0],
+              [0, 1, 0], 
+              [0, 0, 1]]) # base du repere piece
+Lb = np.array([0.15, 0, 0]) # longueur de la piece
+Hg = np.array([0, 0.1, 0]) # grande hauteur de la piece
+Hd = np.array([0, 0.05, 0]) # petite hauteur de la piece
+# caméra
+Vo = np.array([0.8, 0.7, 0]) # position de la caméra dans le repere monde
+V = np.array([[1, 0, 0],
+              [0, 1, 0], 
+              [0, 0, 1]]) # base du repere camera
+
+## début du code
+Po = MaJ_pos(Po, P, W, PI/2, 1)
+Lb = MaJ_pos(Lb, P, W, PI/2, 1)
+Hg = MaJ_pos(Hg, P, W, PI/2, 1)
+Hd = MaJ_pos(Hd, P, W, PI/2, 1)
+Ao = MaJ_pos(Ao, A, W, qT[0], 2)
+Bo = MaJ_pos(Bo, B, A, qT[1], 3)
+Co = MaJ_pos(Co, C, B, qT[2], 3)
+Do = MaJ_pos(Do, D, C, qT[3], 1)
+Eo = MaJ_pos(Eo, E, D, qT[4], 3)
+To = MaJ_pos(To, T, E, qT[5], 1)
+
+print("Tool position : ", To)    
 afficher_robot(Po, Ao, Bo, Co, Do, Eo, To, Wo, Lb, Hg, Hd)
+
 
 
 
