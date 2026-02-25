@@ -17,26 +17,30 @@ def rotation(base, theta, axe):
     theta : angle de rotation en radians
     axe : axe de rotation (1 pour x, 2 pour y, 3 pour z) 
     """
-    new_base = np.zeros((3, 3))
+    matrice_rotation = np.zeros((3, 3))
     if axe == 1:
-        new_base[0,0] = 1
-        new_base[1,1] = np.cos(theta)
-        new_base[1,2] = -np.sin(theta)
-        new_base[2,1] = np.sin(theta)
-        new_base[2,2] = np.cos(theta)
+        matrice_rotation[0,0] = 1
+        matrice_rotation[1,1] = np.cos(theta)
+        matrice_rotation[1,2] = -np.sin(theta)
+        matrice_rotation[2,1] = np.sin(theta)
+        matrice_rotation[2,2] = np.cos(theta)
     elif axe == 2:
-        new_base[0,0] = np.cos(theta)
-        new_base[0,2] = np.sin(theta)
-        new_base[1,1] = 1
-        new_base[2,0] = -np.sin(theta)
-        new_base[2,2] = np.cos(theta)
+        matrice_rotation[0,0] = np.cos(theta)
+        matrice_rotation[0,2] = np.sin(theta)
+        matrice_rotation[1,1] = 1
+        matrice_rotation[2,0] = -np.sin(theta)
+        matrice_rotation[2,2] = np.cos(theta)
     elif axe == 3:
-        new_base[0,0] = np.cos(theta)
-        new_base[0,1] = -np.sin(theta)
-        new_base[1,0] = np.sin(theta)
-        new_base[1,1] = np.cos(theta)
-        new_base[2,2] = 1
-    return np.dot(new_base, base)
+        matrice_rotation[0,0] = np.cos(theta)
+        matrice_rotation[0,1] = -np.sin(theta)
+        matrice_rotation[1,0] = np.sin(theta)
+        matrice_rotation[1,1] = np.cos(theta)
+        matrice_rotation[2,2] = 1
+
+    #new_base = np.dot(matrice_rotation, base)
+    print("Matrice de rotation : \n", matrice_rotation)
+    #print("Nouvelle base : \n", new_base)
+    return matrice_rotation
 
 # matrice de rotation à partir de deux bases
 def matrice_rotation(base1, base2):
@@ -59,7 +63,6 @@ def changement_base(vecteur, base1, base2):
     base1 : base de référence actuelle du vecteur
     base2 : base de référence souhaitée du vecteur
     """
-    new_vecteur = np.zeros(3)
     vect_unitaire = vecteur / np.linalg.norm(vecteur) # normalisation du vecteur
     new_vector =  np.dot(matrice_rotation(base1, base2), vect_unitaire) * np.linalg.norm(vecteur)
     return new_vector
@@ -74,8 +77,10 @@ def MaJ_pos(Vec_pos, base1, base2, theta, axe):
     theta : angle de rotation en radians
     axe : axe de rotation (1 pour x, 2 pour y, 3 pour z)
     """
-    new_base = rotation(base1,theta,axe)
-    new_pos = changement_base(Vec_pos, new_base, base2)
+    # new_base = rotation(base1,theta,axe)
+    # new_pos = changement_base(Vec_pos, new_base, base2)
+    rotation_mat = rotation(base1, theta, axe)
+    new_pos = np.dot(rotation_mat, Vec_pos)
     return new_pos
 
 # affichage de la simulation
@@ -92,25 +97,26 @@ def afficher_robot(Po, Ao, Bo, Co, Do, Eo, To, Wo, Lb, Hg, Hd):
     Dhg = Po + Hg
     Dhd = Dlb + Hd
     #dessiner les membres du robot
-    A = Wo + Ao
-    B = A + Bo
-    C = B + Co
-    D = C + Do
-    E = D + Eo
-    T = E + To
+    a = Wo + Ao
+    b = a + Bo
+    c = b + Co
+    d = c + Do
+    e = d + Eo
+    t = e + To
+    print("Tool position : ", t)  
     # affichage de la configuration du robot
-    ax.plot([E[0], T[0]], [E[2], T[2]], [E[1], T[1]], 'k.-', label = "joint 6") # joint 6
-    ax.plot([D[0], E[0]], [D[2], E[2]], [D[1], E[1]], 'y.-', label = "joint 5") # joint 5
-    ax.plot([C[0], D[0]], [C[2], D[2]], [C[1], D[1]], 'm.-', label = "joint 4") # joint 4
-    ax.plot([B[0], C[0]], [B[2], C[2]], [B[1], C[1]], 'c.-', label = "joint 3") # joint 3
-    ax.plot([A[0], B[0]], [A[2], B[2]], [A[1], B[1]], 'b.-', label = "joint 2") # joint 2
-    ax.plot([Wo[0],A[0]], [Wo[2], A[2]], [Wo[1], A[1]], 'g.-', label = "joint 1") # joint 1
+    ax.plot([e[0], t[0]], [e[2], t[2]], [e[1], t[1]], 'k.-', label = "joint 6") # joint 6
+    ax.plot([d[0], e[0]], [d[2], e[2]], [d[1], e[1]], 'y.-', label = "joint 5") # joint 5
+    ax.plot([c[0], d[0]], [c[2], d[2]], [c[1], d[1]], 'm.-', label = "joint 4") # joint 4
+    ax.plot([b[0], c[0]], [b[2], c[2]], [b[1], c[1]], 'c.-', label = "joint 3") # joint 3
+    ax.plot([a[0], b[0]], [a[2], b[2]], [a[1], b[1]], 'b.-', label = "joint 2") # joint 2
+    ax.plot([Wo[0],a[0]], [Wo[2], a[2]], [Wo[1], a[1]], 'g.-', label = "joint 1") # joint 1
     # afficher la pièce à inspecter
     ax.plot([Po[0], Dlb[0], Dhd[0], Dhg[0], Po[0]], [Po[2], Dlb[2], Dhd[2], Dhg[2], Po[2]],
             [Po[1], Dlb[1], Dhd[1], Dhg[1], Po[1]], 'k.-', label = "Piece") # pièce à inspecter
     #afficher les# points de référence
     ax.plot([Wo[0]],[Wo[2]], [Wo[1]], 'ro-', label = "World") # base du robot
-    ax.plot([T[0]],[T[2]], [T[1]], 'ro-', label = "Tool") # position de l'outil
+    ax.plot([t[0]],[t[2]], [t[1]], 'ro-', label = "Tool") # position de l'outil
     ax.plot([Vo[0]],[Vo[2]], [Vo[1]], 'ko-', label = "Camera") # position de la caméra
     ax.plot([Po[0]],[Po[2]], [Po[1]], 'go-', label = "Piece") # position de la pièce
     # plt.legend()
@@ -118,9 +124,10 @@ def afficher_robot(Po, Ao, Bo, Co, Do, Eo, To, Wo, Lb, Hg, Hd):
 
 
 ## initialisation des données
-PI = 3.141592653
+PI = float(np.pi)  # 3.141592653
 # pour tout les matrice, premiere rangée: x(1), deuxieme rangée: y(2), troisieme rangée: z(3)
 qT = np.array([0, 0, 0, 0, 0, 0]) # qT = [q1, q2, q3, q4, q5, q6] où q = theta
+#qT = np.array([-0.4, -1.2, 0, 0, -0.3708, 0]) # qT = [q1, q2, q3, q4, q5, q6] où q = theta
 #qT = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1]) # qT = [q1, q2, q3, q4, q5, q6] où q = theta
 
 Wo = np.array([0, 0, 0])# origine du repere world
@@ -166,18 +173,17 @@ V = np.array([[1, 0, 0],
               [0, 0, 1]]) # base du repere camera
 
 ## début du code
-Po = MaJ_pos(Po, P, W, PI/2, 1)
-Lb = MaJ_pos(Lb, P, W, PI/2, 1)
-Hg = MaJ_pos(Hg, P, W, PI/2, 1)
-Hd = MaJ_pos(Hd, P, W, PI/2, 1)
+Po = MaJ_pos(Po, P, W, -PI/2, 1)
+Lb = MaJ_pos(Lb, P, W, -PI/2, 1)
+Hg = MaJ_pos(Hg, P, W, -PI/2, 1)
+Hd = MaJ_pos(Hd, P, W, -PI/2, 1)
 Ao = MaJ_pos(Ao, A, W, qT[0], 2)
 Bo = MaJ_pos(Bo, B, A, qT[1], 3)
 Co = MaJ_pos(Co, C, B, qT[2], 3)
 Do = MaJ_pos(Do, D, C, qT[3], 1)
 Eo = MaJ_pos(Eo, E, D, qT[4], 3)
 To = MaJ_pos(To, T, E, qT[5], 1)
-
-print("Tool position : ", To)    
+  
 afficher_robot(Po, Ao, Bo, Co, Do, Eo, To, Wo, Lb, Hg, Hd)
 
 
