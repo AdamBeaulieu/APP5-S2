@@ -5,15 +5,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
-from mpl_toolkits.mplot3d import Axes3D
 
 ## initialisation des fonctions
 
 # rotation des bases de chaque joint
-def rotation(base, theta, axe):
+def mat_rot_ang(theta, axe):
     """ 
-    Effectue une rotation de la base autour de l'axe spécifié par l'angle theta (en radians) 
-    base : base de reference
+    CAlcule la matrice de rotation autour de l'axe spécifié par l'angle theta (en radians) 
     theta : angle de rotation en radians
     axe : axe de rotation (1 pour x, 2 pour y, 3 pour z) 
     """
@@ -37,13 +35,10 @@ def rotation(base, theta, axe):
         matrice_rotation[1,1] = np.cos(theta)
         matrice_rotation[2,2] = 1
 
-    #new_base = np.dot(matrice_rotation, base)
-    print("Matrice de rotation : \n", matrice_rotation)
-    #print("Nouvelle base : \n", new_base)
     return matrice_rotation
 
 # matrice de rotation à partir de deux bases
-def matrice_rotation(base1, base2):
+def mat_rot_base(base1, base2):
     """
     Calcule la matrice de rotation pour passer de la base1 à la base2
     base1 : base de référence actuelle
@@ -56,53 +51,55 @@ def matrice_rotation(base1, base2):
     return rotation    
 
 # changement de base
-def changement_base(vecteur, base1, base2):
+def changement_base(vecteur, R):
     """ 
     Effectue un changement de base du vecteur de la base1 à la base2 
     vecteur : vecteur à transformer
-    base1 : base de référence actuelle du vecteur
-    base2 : base de référence souhaitée du vecteur
+    R : matrice de rotation pour passer de la base1 à la base2
     """
-    vect_unitaire = vecteur / np.linalg.norm(vecteur) # normalisation du vecteur
-    new_vector =  np.dot(matrice_rotation(base1, base2), vect_unitaire) * np.linalg.norm(vecteur)
+    new_vector =  np.dot(R, vecteur)
     return new_vector
 
-# mise a jour des positions
-def MaJ_pos(Vec_pos, base1, base2, theta, axe):
-    """
-    mets à jour la position du vecteur en effectuant une rotation et un changement de base
-    Vec_pos : position du vecteur à mettre à jour
-    base1 : base de référence actuelle du vecteur
-    base2 : base de référence souhaitée du vecteur
-    theta : angle de rotation en radians
-    axe : axe de rotation (1 pour x, 2 pour y, 3 pour z)
-    """
-    # new_base = rotation(base1,theta,axe)
-    # new_pos = changement_base(Vec_pos, new_base, base2)
-    rotation_mat = rotation(base1, theta, axe)
-    new_pos = np.dot(rotation_mat, Vec_pos)
-    return new_pos
+# # mise a jour des positions
+# def MaJ_pos(Vec_pos, base1, base2, theta, axe):
+#     """
+#     mets à jour la position du vecteur en effectuant une rotation et un changement de base
+#     Vec_pos : position du vecteur à mettre à jour
+#     base1 : base de référence actuelle du vecteur
+#     base2 : base de référence souhaitée du vecteur
+#     theta : angle de rotation en radians
+#     axe : axe de rotation (1 pour x, 2 pour y, 3 pour z)
+#     """
+#     # new_base = rotation(base1,theta,axe)
+#     # new_pos = changement_base(Vec_pos, new_base, base2)
+#     rotation_mat = mat_rotation(theta, axe)
+#     new_pos = np.dot(rotation_mat, Vec_pos)
+#     return new_pos
 
 # affichage de la simulation
-def afficher_robot(Po, Ao, Bo, Co, Do, Eo, To, Wo, Lb, Hg, Hd):
+def afficher_robot(Po, rAWo, rBA, rCB, rDC, rED, rTE, Wo, Lb, Hg, Hd):
     # setup de l'affichage
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')  
     ax.set_xlabel('W1')
     ax.set_ylabel('W3')
     ax.set_zlabel('W2')
+    ax.invert_yaxis()
+    plt.xlim(-0.1, 1)
+    plt.ylim(-0.1, 0.5)
+
 
     # dessiner la piece
     Dlb = Po + Lb
     Dhg = Po + Hg
     Dhd = Dlb + Hd
     #dessiner les membres du robot
-    a = Wo + Ao
-    b = a + Bo
-    c = b + Co
-    d = c + Do
-    e = d + Eo
-    t = e + To
+    a = Wo + rAWo
+    b = a + rBA
+    c = b + rCB
+    d = c + rDC
+    e = d + rED
+    t = e + rTE
     print("Tool position : ", t)  
     # affichage de la configuration du robot
     ax.plot([e[0], t[0]], [e[2], t[2]], [e[1], t[1]], 'k.-', label = "joint 6") # joint 6
@@ -126,35 +123,36 @@ def afficher_robot(Po, Ao, Bo, Co, Do, Eo, To, Wo, Lb, Hg, Hd):
 ## initialisation des données
 PI = float(np.pi)  # 3.141592653
 # pour tout les matrice, premiere rangée: x(1), deuxieme rangée: y(2), troisieme rangée: z(3)
-qT = np.array([0, 0, 0, 0, 0, 0]) # qT = [q1, q2, q3, q4, q5, q6] où q = theta
-#qT = np.array([-0.4, -1.2, 0, 0, -0.3708, 0]) # qT = [q1, q2, q3, q4, q5, q6] où q = theta
-#qT = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1]) # qT = [q1, q2, q3, q4, q5, q6] où q = theta
+#qT = np.array([0, 0, 0, 0, 0, 0]) # qT = [q1, q2, q3, q4, q5, q6] où q = theta
+qT = np.array([0, -0.3, 0, 0, 0.5, -1.6]) # inspection de la face avant de la pièce
+#qT = np.array([-0.4, -1.2, 0, 0, -0.3708, 0]) # prise de la pièce
+#qT = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1]) # configuration de validation
 
 Wo = np.array([0, 0, 0])# origine du repere world
 W = np.array([[1, 0, 0], 
               [0, 1, 0], 
               [0, 0, 1]]) # base du repere world
-Ao = np.array([0, 0.15, 0]) # vecteur de W à A (a1, a2, a3)
+rAWo = np.array([0, 0.15, 0]) # vecteur de W à A (a1, a2, a3)
 A = np.array([[1, 0, 0],
               [0, 1, 0],
               [0, 0, 1]]) # base du joint 2
-Bo = np.array([0.05, 0.1, 0]) # vecteur de A à B (b1, b2, b3)
+rBA = np.array([0.05, 0.1, 0]) # vecteur de A à B (b1, b2, b3)
 B = np.array([[1, 0, 0],
               [0, 1, 0],
               [0, 0, 1]]) # base du joint 3
-Co = np.array([0, 0.5, 0]) # vecteur de B à C (c1, c2, c3)
+rCB = np.array([0, 0.5, 0]) # vecteur de B à C (c1, c2, c3)
 C = np.array([[1, 0, 0],
               [0, 1, 0],
               [0, 0, 1]]) # base du joint 4
-Do = np.array([0.1, 0.02, 0]) # vecteur de C à D (d1, d2, d3)
+rDC = np.array([0.1, 0.02, 0]) # vecteur de C à D (d1, d2, d3)
 D = np.array([[1, 0, 0],
               [0, 1, 0],
               [0, 0, 1]]) # base du joint 5
-Eo = np.array([0.3, 0, 0]) # vecteur de D à E ( e1, e2, e3)
+rED = np.array([0.3, 0, 0]) # vecteur de D à E ( e1, e2, e3)
 E = np.array([[1, 0, 0],
               [0, 1, 0],
               [0, 0, 1]]) # base du joint 6
-To = np.array([0.02, 0, 0]) # vecteur de E à T (t1, t2, t3)
+rTE = np.array([0.02, 0, 0]) # vecteur de E à T (t1, t2, t3)
 T = np.array([[1, 0, 0], 
               [0, 1, 0], 
               [0, 0, 1]]) # base du repere outil
@@ -173,18 +171,26 @@ V = np.array([[1, 0, 0],
               [0, 0, 1]]) # base du repere camera
 
 ## début du code
-Po = MaJ_pos(Po, P, W, -PI/2, 1)
-Lb = MaJ_pos(Lb, P, W, -PI/2, 1)
-Hg = MaJ_pos(Hg, P, W, -PI/2, 1)
-Hd = MaJ_pos(Hd, P, W, -PI/2, 1)
-Ao = MaJ_pos(Ao, A, W, qT[0], 2)
-Bo = MaJ_pos(Bo, B, A, qT[1], 3)
-Co = MaJ_pos(Co, C, B, qT[2], 3)
-Do = MaJ_pos(Do, D, C, qT[3], 1)
-Eo = MaJ_pos(Eo, E, D, qT[4], 3)
-To = MaJ_pos(To, T, E, qT[5], 1)
-  
-afficher_robot(Po, Ao, Bo, Co, Do, Eo, To, Wo, Lb, Hg, Hd)
+Po = np.dot(mat_rot_ang(PI/2, 1), Po)
+Lb = np.dot(mat_rot_ang(PI/2, 1), Lb)
+Hg = np.dot(mat_rot_ang(PI/2, 1), Hg)
+Hd = np.dot(mat_rot_ang(PI/2, 1), Hd)
+
+wRa = mat_rot_ang(qT[0], 2)
+aRb = mat_rot_ang(qT[1], 3)
+bRc = mat_rot_ang(qT[2], 3)
+cRd = mat_rot_ang(qT[3], 1)
+dRe = mat_rot_ang(qT[4], 3)
+eRt = mat_rot_ang(qT[5], 1)
+
+rAWo = changement_base(rAWo, wRa)
+rBA = changement_base(rBA, wRa@aRb)
+rCB = changement_base(rCB, wRa@aRb@bRc)
+rDC = changement_base(rDC, wRa@aRb@bRc@cRd)
+rED = changement_base(rED, wRa@aRb@bRc@cRd@dRe)
+rTE = changement_base(rTE, wRa@aRb@bRc@cRd@dRe@eRt)
+
+afficher_robot(Po, rAWo, rBA, rCB, rDC, rED, rTE, Wo, Lb, Hg, Hd)
 
 
 
