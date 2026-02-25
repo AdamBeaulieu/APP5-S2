@@ -86,7 +86,7 @@ def afficher_robot(Po, rAWo, rBA, rCB, rDC, rED, rTE, Wo, Lb, Hg, Hd):
     ax.set_zlabel('W2')
     ax.invert_yaxis()
     plt.xlim(-0.1, 1)
-    plt.ylim(-0.1, 0.5)
+    plt.ylim(-0.1, 1)
 
 
     # dessiner la piece
@@ -132,27 +132,27 @@ Wo = np.array([0, 0, 0])# origine du repere world
 W = np.array([[1, 0, 0], 
               [0, 1, 0], 
               [0, 0, 1]]) # base du repere world
-rAWo = np.array([0, 0.15, 0]) # vecteur de W à A (a1, a2, a3)
+ra_AWo = np.array([0, 0.15, 0]) # vecteur de W à A (a1, a2, a3)
 A = np.array([[1, 0, 0],
               [0, 1, 0],
               [0, 0, 1]]) # base du joint 2
-rBA = np.array([0.05, 0.1, 0]) # vecteur de A à B (b1, b2, b3)
+rb_BA = np.array([0.05, 0.1, 0]) # vecteur de A à B (b1, b2, b3)
 B = np.array([[1, 0, 0],
               [0, 1, 0],
               [0, 0, 1]]) # base du joint 3
-rCB = np.array([0, 0.5, 0]) # vecteur de B à C (c1, c2, c3)
+rc_CB = np.array([0, 0.5, 0]) # vecteur de B à C (c1, c2, c3)
 C = np.array([[1, 0, 0],
               [0, 1, 0],
               [0, 0, 1]]) # base du joint 4
-rDC = np.array([0.1, 0.02, 0]) # vecteur de C à D (d1, d2, d3)
+rd_DC = np.array([0.1, 0.02, 0]) # vecteur de C à D (d1, d2, d3)
 D = np.array([[1, 0, 0],
               [0, 1, 0],
               [0, 0, 1]]) # base du joint 5
-rED = np.array([0.3, 0, 0]) # vecteur de D à E ( e1, e2, e3)
+re_ED = np.array([0.3, 0, 0]) # vecteur de D à E ( e1, e2, e3)
 E = np.array([[1, 0, 0],
               [0, 1, 0],
               [0, 0, 1]]) # base du joint 6
-rTE = np.array([0.02, 0, 0]) # vecteur de E à T (t1, t2, t3)
+rt_TE = np.array([0.02, 0, 0]) # vecteur de E à T (t1, t2, t3)
 T = np.array([[1, 0, 0], 
               [0, 1, 0], 
               [0, 0, 1]]) # base du repere outil
@@ -183,14 +183,14 @@ cRd = mat_rot_ang(qT[3], 1)
 dRe = mat_rot_ang(qT[4], 3)
 eRt = mat_rot_ang(qT[5], 1)
 
-rAWo = changement_base(rAWo, wRa)
-rBA = changement_base(rBA, wRa@aRb)
-rCB = changement_base(rCB, wRa@aRb@bRc)
-rDC = changement_base(rDC, wRa@aRb@bRc@cRd)
-rED = changement_base(rED, wRa@aRb@bRc@cRd@dRe)
-rTE = changement_base(rTE, wRa@aRb@bRc@cRd@dRe@eRt)
+rw_AW = changement_base(ra_AWo, wRa)
+rw_BW = changement_base(rb_BA, wRa@aRb)
+rw_CW = changement_base(rc_CB, wRa@aRb@bRc)
+rw_DW = changement_base(rd_DC, wRa@aRb@bRc@cRd)
+rw_EW = changement_base(re_ED, wRa@aRb@bRc@cRd@dRe)
+rw_TW = changement_base(rt_TE, wRa@aRb@bRc@cRd@dRe@eRt)
 
-afficher_robot(Po, rAWo, rBA, rCB, rDC, rED, rTE, Wo, Lb, Hg, Hd)
+afficher_robot(Po, rw_AW, rw_BW, rw_CW, rw_DW, rw_EW, rw_TW, Wo, Lb, Hg, Hd)
 
 
 
