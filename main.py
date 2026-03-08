@@ -5,7 +5,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
-
+np.set_printoptions(precision=6, suppress=True)
 ## initialisation des fonctions
 # fonctions trigonométriques
 def s(theta):
@@ -50,12 +50,18 @@ def mat_rot_ang(theta, axe):
         matrice_rotation[2,2] = 1
 
     return matrice_rotation
-
+# fonction dévaluation des défauts
 def eval_defaut(defaut):
     x = defaut[0]
     y = defaut[1]
     return (((45*x**2) + (30*x*y) + (85*y**2) - (10.8*x) - (8.4*y) + 0.684) < 0)
-
+# fonction de transformation de coordonnées camera vers piece
+def V2P(rv_V, pRt, tRw, rw_VW, rw_TW, rt_TP):
+    rw_V = rv_V # point par rapport à la caméra dans le repere monde
+    rw_W = rw_V + rw_VW # point par rapport au monde dans le repere monde
+    rt_T = tRw @ (rw_W - rw_TW) # point par rapport au tool dans le repere tool
+    rp_P = pRt @ (rt_T + rt_TP) # point par rapport à la piece dans le repere piece
+    return rp_P
 
 ## initialisation des données
 PI = float(np.pi)  # 3.141592653
@@ -171,58 +177,96 @@ rw_DW = (wRc @ rc_DC) + rw_CW
 rw_EW = (wRd @ rd_ED) + rw_DW
 rw_TW = (wRe @ re_TE) + rw_EW
 print("\nPosition de l'effecteur :\n", rw_TW) 
-## calcul des défaut selon le repere piece
-# Rotation du repere camera vers repere monde
+
+#######################################
+# Analyse des défauts et de la tranche
+#######################################
 wRv = np.array([[-1, 0, 0],
                [0, -1, 0],
                [0, 0, 1]]) # matrice de rotation de V vers W
-DF_w = wRv @ DF_v # défaut de la piece dans le repere monde
 tRw = wRt.T # matrice de rotation de W vers T
-# rotation du tool vers la piece
 pRt=  np.array([[0, 1, 0],
                [0, 0, 1],
                [1, 0, 0]]) # matrice de rotation de T vers P 
 rt_TP = -1 * rt_PT # vecteur de P vers T dans le repere tool
+# Vecteur x, y pour le tracé de la zone interdite et de la droite d'approximation de la tranche
+x = np.linspace(0, 0.15, 150)
+y = np.linspace(0, 0.15, 150)
+## Défauts
+DF_w = wRv @ DF_v # défaut de la piece dans le repere monde
 print("\n")
 print("Des défauts ont été détectés, voici leur position par rapport à l'origine de la pièce:")
-
 # defaut 1
-rw_Df1V = np.array([DF_w[:, 0]]).T # defaut1 par rapport à la caméra dans le repere monde
-rw_Df1W = rw_Df1V + rw_VW # defaut1 par rapport au monde dans le repere monde
-rt_Df1T = tRw @ (rw_Df1W - rw_TW) # defaut1 par rapport au tool dans le repere tool
-rp_Df1P = pRt @ (rt_Df1T + rt_TP) # defaut1 par rapport à la piece dans le repere piece
+# rw_Df1V = np.array([DF_w[:, 0]]).T # defaut1 par rapport à la caméra dans le repere monde
+# rw_Df1W = rw_Df1V + rw_VW # defaut1 par rapport au monde dans le repere monde
+# rt_Df1T = tRw @ (rw_Df1W - rw_TW) # defaut1 par rapport au tool dans le repere tool
+# rp_Df1P = pRt @ (rt_Df1T + rt_TP) # defaut1 par rapport à la piece dans le repere piece
+rp_Df1P = V2P(np.array([DF_w[:, 0]]).T, pRt, tRw, rw_VW, rw_TW, rt_TP)
 print("Defaut 1: \n", rp_Df1P, "\n", "Dans la zone critique: ", eval_defaut(rp_Df1P))
-
 # defaut 2
-rw_Df2V = np.array([DF_w[:, 1]]).T # defaut2 par rapport à la caméra dans le repere monde
-rw_Df2W = rw_Df2V + rw_VW # defaut2 par rapport au monde dans le repere monde
-rt_Df2T = tRw @ (rw_Df2W - rw_TW) # defaut2 par rapport au tool dans le repere tool
-rp_Df2P = pRt @ (rt_Df2T + rt_TP) # defaut2 par rapport à la piece dans le repere piece
+# rw_Df2V = np.array([DF_w[:, 1]]).T # defaut2 par rapport à la caméra dans le repere monde
+# rw_Df2W = rw_Df2V + rw_VW # defaut2 par rapport au monde dans le repere monde
+# rt_Df2T = tRw @ (rw_Df2W - rw_TW) # defaut2 par rapport au tool dans le repere tool
+# rp_Df2P = pRt @ (rt_Df2T + rt_TP) # defaut2 par rapport à la piece dans le repere piece
+rp_Df2P = V2P(np.array([DF_w[:, 1]]).T, pRt, tRw, rw_VW, rw_TW, rt_TP)
 print("Defaut 2: \n", rp_Df2P, "\n", "Dans la zone critique: ", eval_defaut(rp_Df2P))
 #defaut 3
-rw_Df3V = np.array([DF_w[:, 2]]).T # defaut3 par rapport à la caméra dans le repere monde
-rw_Df3W = rw_Df3V + rw_VW # defaut3 par rapport au monde dans le repere monde
-rt_Df3T = tRw @ (rw_Df3W - rw_TW) # defaut3 par rapport au tool dans le repere tool
-rp_Df3P = pRt @ (rt_Df3T + rt_TP) # defaut3 par rapport à la piece dans le repere piece
+# rw_Df3V = np.array([DF_w[:, 2]]).T # defaut3 par rapport à la caméra dans le repere monde
+# rw_Df3W = rw_Df3V + rw_VW # defaut3 par rapport au monde dans le repere monde
+# rt_Df3T = tRw @ (rw_Df3W - rw_TW) # defaut3 par rapport au tool dans le repere tool
+# rp_Df3P = pRt @ (rt_Df3T + rt_TP) # defaut3 par rapport à la piece dans le repere piece
+rp_Df3P = V2P(np.array([DF_w[:, 2]]).T, pRt, tRw, rw_VW, rw_TW, rt_TP)
 print("Defaut 3: \n", rp_Df3P, "\n", "Dans la zone critique: ", eval_defaut(rp_Df3P))
 #defaut 4
-rw_Df4V = np.array([DF_w[:, 3]]).T # defaut4 par rapport à la caméra dans le repere monde
-rw_Df4W = rw_Df4V + rw_VW # defaut4 par rapport au monde dans le repere monde
-rt_Df4T = tRw @ (rw_Df4W - rw_TW) # defaut4 par rapport au tool dans le repere tool
-rp_Df4P = pRt @ (rt_Df4T + rt_TP) # defaut4 par rapport à la piece dans le repere piece
+# rw_Df4V = np.array([DF_w[:, 3]]).T # defaut4 par rapport à la caméra dans le repere monde
+# rw_Df4W = rw_Df4V + rw_VW # defaut4 par rapport au monde dans le repere monde
+# rt_Df4T = tRw @ (rw_Df4W - rw_TW) # defaut4 par rapport au tool dans le repere tool
+# rp_Df4P = pRt @ (rt_Df4T + rt_TP) # defaut4 par rapport à la piece dans le repere piece
+rp_Df4P = V2P(np.array([DF_w[:, 3]]).T, pRt, tRw, rw_VW, rw_TW, rt_TP)
 print("Defaut 4: \n", rp_Df4P, "\n", "Dans la zone critique: ", eval_defaut(rp_Df4P))
 #defaut 5
-rw_Df5V = np.array([DF_w[:, 4]]).T # defaut5 par rapport à la caméra dans le repere monde
-rw_Df5W = rw_Df5V + rw_VW # defaut5 par rapport au monde dans le repere monde
-rt_Df5T = tRw @ (rw_Df5W - rw_TW) # defaut5 par rapport au tool dans le repere tool
-rp_Df5P = pRt @ (rt_Df5T + rt_TP) # defaut5 par rapport à la piece dans le repere piece
+# rw_Df5V = np.array([DF_w[:, 4]]).T # defaut5 par rapport à la caméra dans le repere monde
+# rw_Df5W = rw_Df5V + rw_VW # defaut5 par rapport au monde dans le repere monde
+# rt_Df5T = tRw @ (rw_Df5W - rw_TW) # defaut5 par rapport au tool dans le repere tool
+# rp_Df5P = pRt @ (rt_Df5T + rt_TP) # defaut5 par rapport à la piece dans le repere piece
+rp_Df5P = V2P(np.array([DF_w[:, 4]]).T, pRt, tRw, rw_VW, rw_TW, rt_TP)
 print("Defaut 5: \n", rp_Df5P, "\n", "Dans la zone critique: ", eval_defaut(rp_Df5P))
 # Zone interdite
-x = np.linspace(-1, 1, 400)
-y = np.linspace(-1, 1, 400)
 X, Y = np.meshgrid(x, y)
 Zone = 45*X**2 + 30*X*Y + 85*Y**2 - 10.8*X - 8.4*Y + 0.684
-# setup de l'affichage
+## Tranche
+TI_w = wRv @ TI_v # tranche de la piece dans le repere monde
+rp_Ti1P = V2P(np.array([TI_w[:, 0]]).T, pRt, tRw, rw_VW, rw_TW, rt_TP)
+rp_Ti2P = V2P(np.array([TI_w[:, 1]]).T, pRt, tRw, rw_VW, rw_TW, rt_TP)
+rp_Ti3P = V2P(np.array([TI_w[:, 2]]).T, pRt, tRw, rw_VW, rw_TW, rt_TP)
+rp_Ti4P = V2P(np.array([TI_w[:, 3]]).T, pRt, tRw, rw_VW, rw_TW, rt_TP)
+rp_Ti5P = V2P(np.array([TI_w[:, 4]]).T, pRt, tRw, rw_VW, rw_TW, rt_TP)
+TI_p = np.column_stack((rp_Ti1P, rp_Ti2P, rp_Ti3P, rp_Ti4P, rp_Ti5P)).T
+TI_x = np.array(TI_p[:, 0])
+TI_y = np.array(TI_p[:, 1])
+one = np.ones_like(TI_x)
+A = np.column_stack((TI_x, one))
+X_approx = np.linalg.inv(A.T @ A) @ A.T @ TI_y
+# print("TI_p: \n", TI_p)
+# print("TI_x: \n", TI_x)
+# print("TI_y: \n", TI_y)
+# print("un:\n", one)
+# print("A: \n", A)
+# print("X_approx: \n", X_approx)
+# droite d'approximation de la tranche
+droite_tranche = X_approx[0] * x + X_approx[1]
+dir_tranche = np.array([(x[75]- x[0]), (droite_tranche[75] - droite_tranche[0])])
+dir_tranche = dir_tranche / np.linalg.norm(dir_tranche)
+# Calcul de l'angle phi (angle entre la tranche et p1)
+phi = np.arctan2(dir_tranche[1], dir_tranche[0])
+phi = abs(phi * 180 / PI)
+# print("Direction de la tranche: \n", dir_tranche)
+print("Distance de départ de la tranche:", round(droite_tranche[0], 3), "m \n")
+print("Angle phi (entre la tranche et p1): ", round(phi, 1), "degrée \n")
+#######################################
+# Affichage
+#######################################
+## Afficher le robot
 fig = plt.figure("Robot à l'inspection")
 ax = fig.add_subplot(111, projection='3d')  
 ax.set_xlabel('W1')
@@ -231,7 +275,7 @@ ax.set_zlabel('W2')
 ax.invert_yaxis()
 ax.set_xlim(-1, 1)
 ax.set_ylim(-1, 1)
-# # dessiner la piece
+#dessiner la piece
 # rw_LbW = rw_PW + rp_LbP
 # rw_HgW = rw_PW + rp_HgP
 # rw_HdW = rw_PW + rp_HdP
@@ -244,8 +288,6 @@ Robot = np.array([Wo, rw_AW, rw_BW, rw_CW, rw_DW, rw_EW, rw_TW])
 Robot_w1 = np.array(Robot[:,0])
 Robot_w3 = np.array(Robot[:,2])
 Robot_w2 = np.array(Robot[:,1])
- 
-
 # affichage de la configuration du robot
 ax.plot(Robot_w1, Robot_w3, Robot_w2, 'r.-', label = "Robot") # robot
 # # afficher la pièce à inspecter
@@ -256,9 +298,7 @@ ax.plot([rw_TW[0]],[rw_TW[2]], [rw_TW[1]], 'co-', label = "Tool") # position de 
 ax.plot([rw_VW[0]],[rw_VW[2]], [rw_VW[1]], 'mo-', label = "Camera") # position de la caméra
 # ax.plot([rw_PW[0]],[rw_PW[2]], [rw_PW[1]], 'go-', label = "Piece") # position de la pièce
 
-
-
-# afficher les défauts
+## Afficher les défauts
 defaut = plt.figure("Défauts détectés")
 ax2 = defaut.add_subplot()
 ax2.set_xlim(-0.01, 0.175)
@@ -267,13 +307,15 @@ Piece_P = np.array([Po, rp_LbP, rp_HdP, rp_HgP, Po])
 Piece_p1 = np.array(Piece_P[:,0])
 Piece_p2 = np.array(Piece_P[:,1])
 Piece_p3 = np.array(Piece_P[:,2])
-ax2.contour(X, Y, Zone, levels=[0], colors='r', linestyles='dashed') # zone interdite
+ax2.contour(X, Y, Zone, levels=[0], colors='m', linestyles='dashed') # zone interdite
 ax2.plot([rp_Df1P[0]],[rp_Df1P[1]], 'ro', label = "DF1") # défaut 1
-ax2.plot([rp_Df2P[0]],[rp_Df2P[1]], 'go', label = "DF2") # défaut 2
+ax2.plot([rp_Df2P[0]],[rp_Df2P[1]], 'yo', label = "DF2") # défaut 2
 ax2.plot([rp_Df3P[0]],[rp_Df3P[1]], 'bo', label = "DF3") # défaut 3
 ax2.plot([rp_Df4P[0]],[rp_Df4P[1]], 'co', label = "DF4") # défaut 4
 ax2.plot([rp_Df5P[0]],[rp_Df5P[1]], 'mo', label = "DF5") # défaut 5
 ax2.plot(Piece_p1, Piece_p2, 'k', label = "Piece") # pièce à inspecter
+ax2.plot(TI_x, TI_y, 'go', label = "Tranche") # pièce à inspecter
+ax2.plot(x, droite_tranche, 'r--', label = "Approximation de la tranche") # droite d'approximation de la tranche
 # plt.plot([rp_Df1P[0]],[rp_Df1P[1]],'ro-', label = "DF1") # défaut 1
 # plt.plot([rp_Df2P[0]],[rp_Df2P[1]],'go-', label = "DF2") # défaut 2
 # plt.plot([rp_Df3P[0]],[rp_Df3P[1]],'bo-', label = "DF3") # défaut 3
@@ -282,6 +324,3 @@ ax2.plot(Piece_p1, Piece_p2, 'k', label = "Piece") # pièce à inspecter
 # plt.plot([0, 0.15, 0.15, 0, 0], [0, 0, 0.05, 0.1, 0], 'k.-', label = "Piece") # pièce à inspecter
 plt.legend()
 plt.show()
-
-
-
